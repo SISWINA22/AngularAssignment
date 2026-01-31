@@ -1,0 +1,697 @@
+=============================== Coverage summary ===============================
+Statements   : 95.65% ( 88/92 )
+Branches     : 86.84% ( 33/38 )
+Functions    : 89.47% ( 17/19 )
+Lines        : 95.89% ( 70/73 )
+
+'@angular/core/testing';
+import { DashboardComponent } from './dashboard';
+import { RouterTestingModule } from '@angular/router/testing';
+import { HealthLogService } from '../services/health-log.service';
+import { By } from '@angular/platform-browser';
+import { signal } from '@angular/core';
+
+interface MockLog {
+  name: string;
+  age: number;
+  gender: 'male' | 'female' | 'other';
+  heightCm: number;
+  weightKg: number;
+  healthConcern?: string;
+  createdAt: Date;
+}
+
+class MockStore {
+  private _logs = signal<MockLog[]>([]);
+  logs = () => this._logs();
+  total = () => this._logs().length;
+
+  private _status = 'Healthy (range 55–72 kg)';
+  statusText(h: number, w: number) { return this._status; }
+
+  setStatus(text: string) { this._status = text; }
+  setLogs(logs: MockLog[]) { this._logs.set(logs); }
+}
+
+function makeLog(partial?: Partial<MockLog>): MockLog {
+  return {
+    name: 'Alex',
+    age: 30,
+    gender: 'male',
+    heightCm: 170,
+    weightKg: 70,
+    healthConcern: 'Migraine',
+    createdAt: new Date('2026-01-30T12:00:00Z'),
+    ...partial,
+  };
+}
+
+describe('DashboardComponent', () => {
+  let fixture: ComponentFixture<DashboardComponent>;
+  let component: DashboardComponent;
+  let store: MockStore;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DashboardComponent, RouterTestingModule],
+      providers: [{ provide: HealthLogService, useClass: MockStore }],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(DashboardComponent);
+    component = fixture.componentInstance;
+    store = TestBed.inject(HealthLogService) as unknown as MockStore;
+  });
+
+  it('Given no entries, when dashboard loads, then empty card appears', () => {
+    store.setLogs([]);
+    fixture.detectChanges();
+    expect(fixture.debugElement.query(By.css('.empty-card'))).toBeTruthy();
+  });
+
+  it('Given one log, when dashboard renders, then name + date show correctly', () => {
+    store.setLogs([makeLog({ name: 'John Doe' })]);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('.title')).nativeElement.textContent.trim()).toBe('John Doe');
+    expect(fixture.debugElement.query(By.css('.muted')).nativeElement.textContent).toContain('2026');
+  });
+
+  it('Given a log, when rendered, then Age, Gender, Height, Weight appear', () => {
+    store.setLogs([makeLog({ age: 45, gender: 'female', heightCm: 168, weightKg: 62 })]);
+    fixture.detectChanges();
+
+    const items = fixture.debugElement.queryAll(By.css('.info-value')).map(x => x.nativeElement.textContent.trim());
+    expect(items).toEqual(['45', 'female', '168 cm', '62 kg']);
+  });
+
+  it('Given a concern, when card renders, then concern appears', () => {
+    store.setLogs([makeLog({ healthConcern: 'Fatigue' })]);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('.notes-text')).nativeElement.textContent.trim()).toBe('Fatigue');
+  });
+
+  it('Given overweight status, when card renders, then pill has "over"', () => {
+    store.setLogs([makeLog()]);
+    store.setStatus('Overweight — lose 3 kg');
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('.status-pill')).nativeElement.classList.contains('over')).toBeTrue();
+  });
+
+  it('Given underweight status, when card renders, then pill has "under"', () => {
+    store.setLogs([makeLog()]);
+    store.setStatus('Underweight — gain 4 kg');
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('.status-pill')).nativeElement.classList.contains('under')).toBeTrue();
+  });
+
+  it('Given healthy status, when card renders, then pill has "healthy"', () => {
+    store.setLogs([makeLog()]);
+    store.setStatus('Healthy (range 55–72 kg)');
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('.status-pill')).nativeElement.classList.contains('healthy')).toBeTrue();
+  });
+
+  it('Given multiple logs, when dashboard renders, then card count matches logs length', () => {
+    store.setLogs([makeLog({}), makeLog({}), makeLog({})]);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.queryAll(By.css('.card')).length).toBe(3);
+  });
+}); import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HealthLogForm } from './health-log-form';
+import { HealthLogService } from '../services/health-log.service';
+
+describe('HealthLogForm', () => {
+  let fixture: ComponentFixture<HealthLogForm>;
+  let component: HealthLogForm;
+  let el: HTMLElement;
+
+  let storeSpy: jasmine.SpyObj<HealthLogService>;
+  let routerSpy: jasmine.SpyObj<Router>;
+
+  // ---------- Helpers ----------
+  const getInput = (name: string) =>
+    fixture.debugElement.query(By.css(`[formControlName="${name}"]`))?.nativeElement as
+      | HTMLInputElement
+      | HTMLTextAreaElement
+      | HTMLSelectElement;
+
+  const setInputValue = (name: string, value: string) => {
+    const input = getInput(name) as HTMLInputElement | HTMLTextAreaElement;
+    input.value = value;
+    input.dispatchEvent(new Event('input')); // triggers (input)="onFieldInput()" where present
+    fixture.detectChanges();
+  };
+
+  const setNumberInputValue = (name: string, value: number | null) => {
+    const input = getInput(name) as HTMLInputElement;
+    // For <input type="number">: empty string -> null in FormControl
+    input.value = value === null ? '' : String(value);
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  };
+
+  const setSelectValue = (name: string, value: string) => {
+    const select = getInput(name) as HTMLSelectElement;
+    select.value = value;
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  };
+
+  const clickByCss = (selector: string) => {
+    const btn = fixture.debugElement.query(By.css(selector))?.nativeElement as HTMLButtonElement;
+    btn.click();
+    fixture.detectChanges();
+  };
+
+  const fillValidForm = (overrides?: Partial<{
+    name: string;
+    age: number;
+    gender: 'male' | 'female' | 'other';
+    heightFt: number;
+    heightIn: number;
+    weightKg: number;
+    healthConcern: string;
+  }>) => {
+    const v = {
+      name: '  John Doe  ',
+      age: 30,
+      gender: 'male' as const,
+      heightFt: 5,
+      heightIn: 10,
+      weightKg: 70,
+      healthConcern: '  Migraine  ',
+      ...overrides,
+    };
+
+    setInputValue('name', v.name);
+    setNumberInputValue('age', v.age);
+    setSelectValue('gender', v.gender);
+    setNumberInputValue('heightFt', v.heightFt);
+    setNumberInputValue('heightIn', v.heightIn);
+    setNumberInputValue('weightKg', v.weightKg);
+    setInputValue('healthConcern', v.healthConcern);
+
+    return v;
+  };
+
+  beforeEach(async () => {
+    storeSpy = jasmine.createSpyObj('HealthLogService', ['add', 'statusText']);
+    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+
+    await TestBed.configureTestingModule({
+      imports: [ReactiveFormsModule, HealthLogForm], // standalone component
+      providers: [
+        { provide: HealthLogService, useValue: storeSpy },
+        { provide: Router, useValue: routerSpy },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(HealthLogForm);
+    component = fixture.componentInstance;
+    el = fixture.nativeElement as HTMLElement;
+    fixture.detectChanges();
+  });
+
+  it('should start with an invalid form and disable the Save button', () => {
+    // Given
+    const saveBtn = el.querySelector('button[type="submit"]') as HTMLButtonElement;
+
+    // Then
+    expect(component.form.invalid).toBeTrue();
+    expect(saveBtn.disabled).toBeTrue();
+  });
+
+  it('should validate name: required, minlength, maxlength', () => {
+    // required
+    setInputValue('name', '');
+    component.form.controls.name.markAsTouched();
+    fixture.detectChanges();
+    expect(component.form.controls.name.hasError('required')).toBeTrue();
+
+    // minlength
+    setInputValue('name', 'A');
+    expect(component.form.controls.name.hasError('minlength')).toBeTrue();
+
+    // maxlength
+    setInputValue('name', 'x'.repeat(61));
+    expect(component.form.controls.name.hasError('maxlength')).toBeTrue();
+  });
+
+  it('should validate age: required, min(0), max(120)', () => {
+    const ctrl = component.form.controls.age;
+
+    // required
+    setNumberInputValue('age', null);
+    ctrl.markAsTouched();
+    expect(ctrl.hasError('required')).toBeTrue();
+
+    // min
+    setNumberInputValue('age', -1);
+    expect(ctrl.hasError('min')).toBeTrue();
+
+    // max
+    setNumberInputValue('age', 121);
+    expect(ctrl.hasError('max')).toBeTrue();
+  });
+
+  it('should validate gender: required + pattern(male|female|other)', () => {
+    const ctrl = component.form.controls.gender;
+
+    // required
+    setSelectValue('gender', '');
+    ctrl.markAsTouched();
+    expect(ctrl.hasError('required')).toBeTrue();
+
+    // invalid pattern (set directly out of option list)
+    ctrl.setValue('invalid' as any);
+    fixture.detectChanges();
+    expect(ctrl.hasError('pattern')).toBeTrue();
+
+    // valid options
+    setSelectValue('gender', 'male');
+    expect(ctrl.valid).toBeTrue();
+
+    setSelectValue('gender', 'female');
+    expect(ctrl.valid).toBeTrue();
+
+    setSelectValue('gender', 'other');
+    expect(ctrl.valid).toBeTrue();
+  });
+
+  it('should validate heightFt (required, min=1, max=8) and heightIn (required, 0-11)', () => {
+    const ft = component.form.controls.heightFt;
+    const inc = component.form.controls.heightIn;
+
+    // heightFt: required
+    setNumberInputValue('heightFt', null);
+    ft.markAsTouched();
+    expect(ft.hasError('required')).toBeTrue();
+
+    // heightFt: min
+    setNumberInputValue('heightFt', 0);
+    expect(ft.hasError('min')).toBeTrue();
+
+    // heightFt: max
+    setNumberInputValue('heightFt', 9);
+    expect(ft.hasError('max')).toBeTrue();
+
+    // heightIn: required
+    setNumberInputValue('heightIn', null);
+    inc.markAsTouched();
+    expect(inc.hasError('required')).toBeTrue();
+
+    // heightIn: min
+    setNumberInputValue('heightIn', -1);
+    expect(inc.hasError('min')).toBeTrue();
+
+    // heightIn: max
+    setNumberInputValue('heightIn', 12);
+    expect(inc.hasError('max')).toBeTrue();
+  });
+
+  it('should validate weightKg: required, min(2), max(400)', () => {
+    const ctrl = component.form.controls.weightKg;
+
+    // required
+    setNumberInputValue('weightKg', null);
+    ctrl.markAsTouched();
+    expect(ctrl.hasError('required')).toBeTrue();
+
+    // min
+    setNumberInputValue('weightKg', 1);
+    expect(ctrl.hasError('min')).toBeTrue();
+
+    // max
+    setNumberInputValue('weightKg', 401);
+    expect(ctrl.hasError('max')).toBeTrue();
+  });
+
+  it('touchedInvalid() should reflect touched + invalid correctly', () => {
+    // Given invalid value
+    setInputValue('name', '');
+    // When untouched
+    expect(component.touchedInvalid('name')).toBeFalse();
+    // When touched
+    component.form.controls.name.markAsTouched();
+    fixture.detectChanges();
+    // Then
+    expect(component.touchedInvalid('name')).toBeTrue();
+  });
+
+  // ============================================================
+  // Status text and classification
+  // ============================================================
+
+  it('onFieldInput() should compute and set statusText when cm & valid weight present', () => {
+    // Given
+    storeSpy.statusText.and.returnValue('Healthy weight (BMI 22.1)');
+
+    // When
+    setNumberInputValue('heightFt', 5);
+    setNumberInputValue('heightIn', 10);
+    setNumberInputValue('weightKg', 70);
+
+    // Then
+    expect(storeSpy.statusText).toHaveBeenCalledWith(177.8, 70);
+    expect(component.statusText()).toBe('Healthy weight (BMI 22.1)');
+  });
+
+  it('onFieldInput() should clear statusText if weight is invalid or missing', () => {
+    // Given
+    storeSpy.statusText.and.returnValue('Should not matter');
+
+    // When weight invalid
+    setNumberInputValue('heightFt', 5);
+    setNumberInputValue('heightIn', 10);
+    setNumberInputValue('weightKg', 1);
+
+    // Then
+    expect(component.statusText()).toBeNull();
+
+    // When weight missing
+    setNumberInputValue('weightKg', null);
+    expect(component.statusText()).toBeNull();
+  });
+
+  it('statusKind() should map statusText to classes: healthy | under | over', () => {
+    // Underweight
+    storeSpy.statusText.and.returnValue('Underweight (BMI 17.9)');
+    setNumberInputValue('heightFt', 5);
+    setNumberInputValue('heightIn', 9);
+    setNumberInputValue('weightKg', 50);
+    expect(component.statusKind()).toBe('under');
+
+    // Overweight
+    storeSpy.statusText.and.returnValue('Overweight (BMI 27.3)');
+    setNumberInputValue('weightKg', 82);
+    expect(component.statusKind()).toBe('over');
+
+    // Healthy
+    storeSpy.statusText.and.returnValue('Healthy range (BMI 22.5)');
+    setNumberInputValue('weightKg', 68);
+    expect(component.statusKind()).toBe('healthy');
+
+    // Null
+    component.statusText.set(null);
+    expect(component.statusKind()).toBeNull();
+  });
+
+  it('should render the banner when statusText exists and apply the correct class', () => {
+    // Given
+    storeSpy.statusText.and.returnValue('Healthy (BMI 22.5)');
+    setNumberInputValue('heightFt', 5);
+    setNumberInputValue('heightIn', 10);
+    setNumberInputValue('weightKg', 70);
+
+    // Then
+    const banner = el.querySelector('.banner') as HTMLElement;
+    expect(banner).toBeTruthy();
+    expect(banner.textContent?.toLowerCase()).toContain('weight status');
+    expect(banner.classList.contains('healthy')).toBeTrue();
+  });
+
+  // ============================================================
+  // Submit flow
+  // ============================================================
+
+  it('should submit a valid form, trim fields, compute cm and navigate to /dashboard', () => {
+    // Given
+    storeSpy.statusText.and.returnValue('Healthy (BMI 22.5)');
+    fillValidForm();
+    const saveBtn = el.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(component.form.valid).toBeTrue();
+    expect(saveBtn.disabled).toBeFalse();
+
+    // When
+    saveBtn.click();
+    fixture.detectChanges();
+
+    // Then
+    expect(storeSpy.add).toHaveBeenCalledTimes(1);
+    expect(storeSpy.add).toHaveBeenCalledWith({
+      name: 'John Doe',
+      age: 30,
+      gender: 'male',
+      heightCm: 177.8,
+      weightKg: 70,
+      healthConcern: 'Migraine',
+    });
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/dashboard']);
+  });
+
+  it('should mark all as touched and not submit when form is invalid', () => {
+    // Given invalid form (initial state)
+    expect(component.form.invalid).toBeTrue();
+
+    // When: call onSubmit directly because Save is disabled
+    component.onSubmit();
+    fixture.detectChanges();
+
+    // Then
+    Object.values(component.form.controls).forEach((c) => {
+      expect(c.touched).toBeTrue();
+    });
+    expect(storeSpy.add).not.toHaveBeenCalled();
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
+  });
+
+  it('should set {invalidHeight:true} on heightFt if toCentimeters returns null (forced via spy)', () => {
+    // Given: valid form values first
+    fillValidForm();
+    expect(component.form.valid).toBeTrue();
+    // Force the edge branch
+    spyOn(component as any, 'toCentimeters').and.returnValue(null);
+
+    // When
+    component.onSubmit();
+
+    // Then
+    expect(component.form.controls.heightFt.errors?.['invalidHeight']).toBeTrue();
+    expect(storeSpy.add).not.toHaveBeenCalled();
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
+  });
+
+  // ============================================================
+  // Reset
+  // ============================================================
+
+  it('should reset the form and clear statusText when Reset is clicked', () => {
+    // Given
+    storeSpy.statusText.and.returnValue('Healthy (BMI 22.5)');
+    fillValidForm();
+    setNumberInputValue('heightFt', 5);
+    setNumberInputValue('heightIn', 10);
+    setNumberInputValue('weightKg', 70);
+    expect(component.statusText()).not.toBeNull();
+
+    // When
+    clickByCss('.actions .btn.ghost');
+
+    // Then
+    expect(component.form.pristine).toBeTrue();
+    expect(component.form.untouched).toBeTrue();
+    expect(component.statusText()).toBeNull();
+  });
+
+  it('should enable Save button only when the form is valid', () => {
+    // Given initially invalid
+    const saveBtn = el.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(saveBtn.disabled).toBeTrue();
+
+    // When valid
+    fillValidForm();
+    fixture.detectChanges();
+
+    // Then
+    expect(component.form.valid).toBeTrue();
+    expect(saveBtn.disabled).toBeFalse();
+  });
+});import { TestBed } from '@angular/core/testing';
+import { HealthLogService } from './health-log.service';
+// If your model exports Gender enum/type, import it. Otherwise keep 'as any' casts.
+// import { Gender, HealthLog } from '../models/health-log.model';
+import { HealthLog } from '../models/health-log.model';
+
+describe('HealthLogService', () => {
+  let service: HealthLogService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [HealthLogService],
+    });
+    service = TestBed.inject(HealthLogService);
+    // Ensure isolation across tests
+    service.clear();
+  });
+
+  it('should be created', () => {
+    // Assert
+    expect(service).toBeTruthy();
+  });
+
+  // ---------------- add() ----------------
+
+  it('Given a valid payload, When add() is called, Then it adds a log with createdAt and preserves fields', () => {
+    // Arrange
+    const start = new Date();
+    const log = {
+      name: 'Test User',
+      age: 25,
+      heightCm: 170,
+      weightKg: 70,
+      gender: 'male' as any,             // or Gender.Male if you have an enum
+      healthConcern: 'None'              // <-- renamed from concern
+    };
+
+    // Act
+    service.add(log);
+
+    // Assert
+    const logs = service.logs();
+    expect(logs.length).toBe(1);
+    const entry = logs[0];
+    expect(entry.createdAt instanceof Date).toBeTrue();
+    expect(+entry.createdAt).toBeGreaterThanOrEqual(+start);
+    expect(entry.name).toBe('Test User');
+    expect(entry.age).toBe(25);
+    expect(entry.heightCm).toBe(170);
+    expect(entry.weightKg).toBe(70);
+    expect(entry.gender).toBe('male' as any);
+    expect(entry.healthConcern).toBe('None');
+    expect(service.total()).toBe(1);
+  });
+
+  it('Given existing items, When add() is called again, Then the new entry is prepended (index 0)', () => {
+    // Arrange
+    service.add({
+      name: 'First',
+      age: 20,
+      heightCm: 160,
+      weightKg: 55,
+      gender: 'female' as any,
+      healthConcern: 'None'
+    });
+
+    // Act
+    service.add({
+      name: 'Second',
+      age: 30,
+      heightCm: 175,
+      weightKg: 75,
+      gender: 'male' as any,
+      healthConcern: 'Back pain'
+    });
+
+    // Assert
+    const logs = service.logs();
+    expect(logs.length).toBe(2);
+    expect(logs[0].name).toBe('Second');
+    expect(logs[1].name).toBe('First');
+    expect(service.total()).toBe(2);
+  });
+
+  // ---------------- clear() ----------------
+
+  it('Given prefilled logs, When clear() is called, Then all logs are removed and total is 0', () => {
+    // Arrange
+    service.add({
+      name: 'User',
+      age: 22,
+      heightCm: 165,
+      weightKg: 60,
+      gender: 'female' as any,
+      healthConcern: 'None'
+    });
+
+    // Act
+    service.clear();
+
+    // Assert
+    expect(service.logs().length).toBe(0);
+    expect(service.total()).toBe(0);
+  });
+
+  // ---------------- total() ----------------
+
+  it('Given multiple adds, When total() is read, Then it returns the number of logs', () => {
+    // Arrange
+    service.add({
+      name: 'A',
+      age: 20,
+      heightCm: 160,
+      weightKg: 50,
+      gender: 'female' as any,
+      healthConcern: 'None'
+    });
+
+    service.add({
+      name: 'B',
+      age: 30,
+      heightCm: 180,
+      weightKg: 80,
+      gender: 'male' as any,
+      healthConcern: 'Back pain'
+    });
+
+    // Assert
+    expect(service.total()).toBe(2);
+  });
+
+  // ---------------- healthyRangeKg() ----------------
+
+  it('Given height 170 cm, When healthyRangeKg() is called, Then min/max follow BMI 18.5–24.9 with 1-decimal rounding', () => {
+    // Arrange
+    const heightCm = 170;
+
+    // Act
+    const result = service.healthyRangeKg(heightCm);
+
+    // Assert
+    expect(result.min).toBeCloseTo(53.5, 1); // 18.5 * 1.7^2 = 53.465 -> 53.5
+    expect(result.max).toBeCloseTo(72.0, 1); // 24.9 * 1.7^2 = 71.961 -> 72.0
+    // sanity: one decimal place formatting
+    expect(result.min).toBe(Number(result.min.toFixed(1)));
+    expect(result.max).toBe(Number(result.max.toFixed(1)));
+  });
+
+  // ---------------- statusText() ----------------
+
+  it('Given missing height or weight, When statusText() is called, Then it returns null', () => {
+    expect(service.statusText(0, 70)).toBeNull();
+    expect(service.statusText(170, 0)).toBeNull();
+  });
+
+  it('Given weight below min, When statusText() is called, Then it returns an Underweight message with "gain"', () => {
+    // Arrange
+    const text = service.statusText(170, 45)!;
+
+    // Assert
+    expect(text).toContain('Underweight');
+    expect(text).toContain('gain');
+  });
+
+  it('Given weight above max, When statusText() is called, Then it returns an Overweight message with "lose"', () => {
+    // Arrange
+    const text = service.statusText(170, 85)!;
+
+    // Assert
+    expect(text).toContain('Overweight');
+    expect(text).toContain('lose');
+  });
+
+  it('Given weight in range, When statusText() is called, Then it returns a Healthy weight range message', () => {
+    // Arrange
+    const text = service.statusText(170, 65)!;
+
+    // Assert
+    expect(text).toContain('Healthy weight range');
+  });
+});
