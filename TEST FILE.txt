@@ -1,1 +1,816 @@
+:host {
+  display: block;
+  margin-top: 0;
+}
+
+/* Header row */
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+.header-row h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1f1937;
+}
+
+/* Card grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 22px;
+  margin-top: 12px;
+}
+
+/* Card */
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+  border-color: #e2e8f0;
+}
+
+/* Card head (name + date) */
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #111827;
+}
+.muted {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+/* Info grid */
+.info-grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border: 1px dashed #e5e7eb;
+  border-radius: 12px;
+}
+.info-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+.info-label {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  flex: 0 0 auto;
+}
+.info-value {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Notes */
+.notes {
+  margin-top: 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.notes-label {
+  display: inline-block;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin: 0 0 4px;
+}
+.notes-text {
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* Status row + pill */
+.status-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  color: #1f2937;
+  background: #f8fafc;
+}
+/* Over + Under share same palette */
+.status-pill.over,
+.status-pill.under {
+  color: #dc2626;
+  background: #fff1f2;
+  border-color: #fecaca;
+}
+.status-pill.healthy {
+  color: #065f46;
+  background: #ecfdf5;
+}
+
+/* Animated Empty State Card */
+.empty-card {
+  width: 100%;
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 50px 40px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.10);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: fadeSlideIn .6s ease forwards;
+}
+.empty-anim-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 16px;
+  position: relative;
+  background: radial-gradient(circle at 30% 30%, #9a3ed6, #77129f);
+  box-shadow: 0 0 22px rgba(119, 18, 159, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: circlePulse 2s infinite ease-in-out;
+}
+.heart-svg {
+  width: 32px;
+  height: 42px;
+  z-index: 2;
+  animation: heartBeat 1.25s infinite ease-in-out;
+  transform-origin: center;
+}
+.ekg-line {
+  position: absolute;
+  width: 140px;
+  height: 30px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  opacity: .95;
+  filter: drop-shadow(0 0 3px rgba(255, 0, 0, 0.6));
+}
+.ekg-path { stroke: red; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.ekg-dot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  top: 50%;
+  left: calc(50% - 70px);
+  transform: translate(0, -50%);
+  background: red;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.75), 0 0 16px rgba(255, 0, 0, 0.45);
+  animation: ekgDotRun 1.25s infinite ease-in-out;
+  z-index: 2;
+}
+.empty-card h3 {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 4px 0 6px;
+  color: #1f2937;
+}
+.empty-card p  {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+.empty-btn {
+  display: inline-block;
+  background: #77129f;
+  color: #fff;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background .2s, transform .2s;
+}
+.empty-btn:hover {
+  background: #6a108f;
+  transform: translateY(-1px);
+}
+
+/* Animations */
+@keyframes fadeSlideIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes circlePulse  { 0%{transform:scale(1)} 50%{transform:scale(1.07)} 100%{transform:scale(1)} }
+@keyframes heartBeat    { 0%{transform:scale(1)} 20%{transform:scale(1.24)} 40%{transform:scale(1)} 60%{transform:scale(1.24)} 100%{transform:scale(1)} }
+@keyframes ekgDotRun {
+  0%{transform:translate(0,-50%)}
+  10%{transform:translate(20px,-50%)}
+  18%{transform:translate(32px,-62%)}
+  26%{transform:translate(44px,-38%)}
+  34%{transform:translate(56px,-50%)}
+  46%{transform:translate(84px,-50%)}
+  56%{transform:translate(102px,-50%)}
+  66%{transform:translate(114px,-62%)}
+  74%{transform:translate(126px,-38%)}
+  84%{transform:translate(136px,-50%)}
+  100%{transform:translate(140px,-50%)}
+}
+
+
+<section class="header-row">
+  <h2>Health Entries</h2>
+</section>
+
+<section class="grid" *ngIf="total() > 0; else empty">
+  <article class="card" *ngFor="let log of logs()">
+    <!-- Card header -->
+    <header class="card-head">
+      <h4 class="title">{{ log.name }}</h4>
+      <span class="muted">{{ log.createdAt | date: 'medium' }}</span>
+    </header>
+
+    <!-- Info grid -->
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Age</span>
+        <span class="info-value">{{ log.age }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Gender</span>
+        <span class="info-value">{{ log.gender }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Height</span>
+        <span class="info-value">{{ log.heightCm }} cm</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Weight</span>
+        <span class="info-value">{{ log.weightKg }} kg</span>
+      </div>
+    </div>
+
+    <!-- Concern -->
+    <div *ngIf="log.healthConcern" class="notes">
+      <span class="notes-label">Concern</span>
+      <div class="notes-text">{{ log.healthConcern }}</div>
+    </div>
+
+    <!-- Status pill -->
+    <footer class="status-row">
+      <span class="status-pill" [ngClass]="statusType(log.heightCm, log.weightKg)">
+        {{ statusText(log.heightCm, log.weightKg) }}
+      </span>
+    </footer>
+  </article>
+</section>
+
+<ng-template #empty>
+  <section class="empty-card">
+    <!-- Animated Circle with Heart + Red EKG + Pulse Dot -->
+    <div class="empty-anim-circle">
+      <!-- EKG line (red) -->
+      <svg class="ekg-line" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true">
+        <polyline
+          class="ekg-path"
+          fill="none"
+          stroke="red"
+          stroke-width="3"
+          stroke-linejoin="round"
+          stroke-linecap="round"
+          points="0,20 20,20 35,20 45,5 55,35 70,20 95,20 110,20 120,5 130,35 145,20 180,20 200,20"
+        />
+      </svg>
+
+      <!-- Moving pulse dot (red) -->
+      <div class="ekg-dot" aria-hidden="true"></div>
+
+      <!-- Heart icon -->
+      <svg class="heart-svg" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 21s-6.2-4.3-9-7.8C-1.6 9.5.3 4.8 4.3 3.3 6.6 2.4 9.2 3.4 12 6c2.8-2.6 5.4-3.6 7.7-2.7 4 1.5 5.9 6.2 1.3 9.9C18.2 16.7 12 21 12 21z"
+          fill="white"
+        />
+      </svg>
+    </div>
+
+    <h3>No Health Entries Yet</h3>
+    <p>Start tracking your health journey.<br />Add your first entry now.</p>
+
+    <a routerLink="/form" class="empty-btn">+ Add Entry</a>
+  </section>
+</ng-template>
+
+
+import { Component, computed, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { HealthLogService } from '../services/health-log.service';
+
+@Component({
+  selector: 'app-dashboard',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  templateUrl: './dashboard.html',
+  styleUrls: ['./dashboard.css'],
+})
+export class DashboardComponent {
+  private store = inject(HealthLogService);
+
+  logs = computed(() => this.store.logs());
+  total = computed(() => this.store.total());
+
+  statusText(heightCm: number, weightKg: number) {
+    return this.store.statusText(heightCm, weightKg) ?? '';
+  }
+
+  /** Classify weight status for coloring */
+  statusType(
+    heightCm: number,
+    weightKg: number
+  ): 'over' | 'under' | 'healthy' {
+    const text = this.statusText(heightCm, weightKg);
+
+    if (text.startsWith('Overweight')) return 'over';
+    if (text.startsWith('Underweight')) return 'under';
+    return 'healthy';  
+  }
+
+}
+
+/* Page spacing */
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  margin-top: 8px;        /* tighter */
+  overflow: hidden;
+}
+
+.page-header { margin: 0 0 12px 0; }
+.page-header h1 { margin: 0; font-size: 18px; font-weight: 700; }
+.subtitle { margin-top: 4px; color: #6b7280; font-size: 14px; }
+.req { color: #dc2626; }
+
+/* Card */
+.form-card {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+/* Grid rows */
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.row-full { grid-template-columns: 1fr; margin-bottom: 16px; }
+
+@media (max-width: 900px) {
+  .row { grid-template-columns: 1fr; }
+}
+
+/* Field layout */
+.field {
+  display: grid;
+  grid-template-rows: auto minmax(44px, auto) 18px;
+  gap: 4px;
+  align-items: start;
+}
+
+label { font-weight: 600; color: #0f172a; }
+
+/* Inputs */
+input, textarea, select {
+  width: 100%;
+  height: 44px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+}
+
+textarea { height: 80px; resize: none; }
+
+/* Remove number spinners */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Focus */
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #6d28d9;
+  box-shadow: inset 0 0 0 2px rgba(109, 40, 217, 0.35);
+}
+
+/* Error line */
+.error {
+  height: 18px;
+  font-size: 13px;
+  color: #dc2626;
+  visibility: hidden;
+}
+.error.show { visibility: visible; }
+
+/* Weight status banner */
+.banner {
+  background: #f6e8ff;
+  border: 1px solid #e3caff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 10px 0 16px;
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.45;
+  box-shadow: 0 4px 12px rgba(119, 18, 159, 0.06);
+  display: flex;
+  gap: 6px;
+}
+.banner strong { color: #77129f; }
+
+/* Color coding */
+.banner.healthy {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+.banner.over,
+.banner.under {
+  background: #fff1f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+/* Actions */
+.actions { display: flex; gap: 12px; justify-content: flex-end; }
+.btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  border: 1px solid transparent;
+  min-width: 110px;
+}
+.btn.primary {
+  background: #77129f;
+  color: #fff;
+}
+.btn.primary[disabled] {
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+.btn.ghost {
+  background: #fff;
+  color: #dc2626;
+  border-color: #dc2626;
+}
+.btn.ghost:hover { background: #fdecec; }
+
+<section class="page">
+  <div class="page-header">
+    <h1>Add Health Entry</h1>
+    <p class="subtitle">
+      Provide details below. Fields marked <span class="req">*</span> are required.
+    </p>
+  </div>
+
+  <form class="form-card" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+    <!-- Name + Age -->
+    <div class="row">
+      <div class="field">
+        <label>Name <span class="req">*</span></label>
+        <input formControlName="name" (input)="onFieldInput()" placeholder="Full name" />
+        <p class="error" [class.show]="touchedInvalid('name')">
+          {{
+          form.controls.name.errors?.['required'] ? 'Name is required.' :
+          form.controls.name.errors?.['minlength'] ? 'Minimum 2 characters.' :
+          form.controls.name.errors?.['maxlength'] ? 'Max 60 characters.' : ''
+          }}
+        </p>
+      </div>
+
+      <div class="field">
+        <label>Age <span class="req">*</span></label>
+        <input type="number" formControlName="age" (input)="onFieldInput()" placeholder="e.g., 22" />
+        <p class="error" [class.show]="touchedInvalid('age')">
+          {{
+          form.controls.age.errors?.['required'] ? 'Age is required.' :
+          form.controls.age.errors?.['min'] ? 'Cannot be negative.' :
+          form.controls.age.errors?.['max'] ? 'Cannot exceed 120.' : ''
+          }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Height ft + in -->
+    <div class="row">
+      <div class="field">
+        <label>Height (ft) <span class="req">*</span></label>
+        <input type="number" formControlName="heightFt" (input)="onFieldInput()" placeholder="e.g., 5" />
+        <p class="error" [class.show]="touchedInvalid('heightFt')">
+          {{
+          form.controls.heightFt.errors?.['required'] ? 'Feet required.' :
+          form.controls.heightFt.errors?.['min'] ? 'Min 1.' :
+          form.controls.heightFt.errors?.['max'] ? 'Max 8.' :
+          form.controls.heightFt.errors?.['invalidHeight'] ? 'Invalid height.' : ''
+          }}
+        </p>
+      </div>
+
+      <div class="field">
+        <label>Height (in) <span class="req">*</span></label>
+        <input type="number" formControlName="heightIn" (input)="onFieldInput()" placeholder="0–11" />
+        <p class="error" [class.show]="touchedInvalid('heightIn')">
+          {{
+          form.controls.heightIn.errors?.['required'] ? 'Inches required.' :
+          form.controls.heightIn.errors?.['min'] ? 'Cannot be negative.' :
+          form.controls.heightIn.errors?.['max'] ? 'Must be 0–11.' : ''
+          }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Weight + Gender -->
+    <div class="row">
+      <div class="field">
+        <label>Weight (kg) <span class="req">*</span></label>
+        <input type="number" formControlName="weightKg" (input)="onFieldInput()" placeholder="e.g., 65" />
+        <p class="error" [class.show]="touchedInvalid('weightKg')">
+          {{
+          form.controls.weightKg.errors?.['required'] ? 'Weight required.' :
+          form.controls.weightKg.errors?.['min'] ? 'Min 2 kg.' :
+          form.controls.weightKg.errors?.['max'] ? 'Too large.' : ''
+          }}
+        </p>
+      </div>
+
+      <div class="field">
+        <label>Gender <span class="req">*</span></label>
+        <select formControlName="gender">
+          <option value="">Select gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+        <p class="error" [class.show]="touchedInvalid('gender')">
+          Gender is required.
+        </p>
+      </div>
+    </div>
+
+    <!-- Concern -->
+    <div class="row-full">
+      <div class="field">
+        <label>Health Concern <span class="req">*</span></label>
+        <textarea formControlName="healthConcern" placeholder="e.g., Migraine, knee pain"></textarea>
+        <p class="error" [class.show]="touchedInvalid('healthConcern')">
+          {{
+          form.controls.healthConcern.errors?.['required'] ? 'Health concern is required.' :
+          form.controls.healthConcern.errors?.['maxlength'] ? 'Max 160 characters.' : ''
+          }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Weight Status -->
+    <div class="banner" *ngIf="statusText() as s" [ngClass]="statusKind()">
+      <strong>Weight status:</strong> {{ s }}
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn primary" type="submit" [disabled]="form.invalid">Save</button>
+      <button class="btn ghost" type="button" (click)="form.reset(); statusText.set(null)">Reset</button>
+    </div>
+
+  </form>
+</section>
+
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HealthLogService } from '../services/health-log.service';
+import { Gender } from '../models/health-log.model';
+
+function toNumberOrNull(v: unknown): number | null {
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  return isNaN(n) ? null : n;
+}
+
+const genderPattern = /^(male|female|other)$/;
+
+@Component({
+  selector: 'app-health-log-form',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './health-log-form.html',
+  styleUrls: ['./health-log-form.css'],
+})
+export class HealthLogForm {
+  private fb = inject(FormBuilder);
+  private store = inject(HealthLogService);
+  private router = inject(Router);
+
+  form = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(60)]],
+    age: [null, [Validators.required, Validators.min(0), Validators.max(120)]],
+
+    gender: ['', [Validators.required, Validators.pattern(genderPattern)]],
+
+    heightFt: [null, [Validators.required, Validators.min(1), Validators.max(8)]],
+    heightIn: [0, [Validators.required, Validators.min(0), Validators.max(11)]],
+
+    weightKg: [null, [Validators.required, Validators.min(2), Validators.max(400)]],
+
+    healthConcern: ['', [Validators.required, Validators.maxLength(160)]],
+  });
+
+  statusText = signal<string | null>(null);
+
+  private toCentimeters(ft: number | null, inch: number | null): number | null {
+    if (ft == null || ft <= 0) return null;
+    const inchesTotal = (ft * 12) + (inch ?? 0);
+    if (inchesTotal <= 0) return null;
+    return +(inchesTotal * 2.54).toFixed(1);
+  }
+
+  onFieldInput() {
+    const ft = toNumberOrNull(this.form.controls.heightFt.value);
+    const inc = toNumberOrNull(this.form.controls.heightIn.value) ?? 0;
+    const cm = this.toCentimeters(ft, inc);
+    const w = toNumberOrNull(this.form.controls.weightKg.value);
+
+    if (cm && w && this.form.controls.weightKg.valid) {
+      this.statusText.set(this.store.statusText(cm, w));
+    } else {
+      this.statusText.set(null);
+    }
+  }
+
+  touchedInvalid(ctrl: keyof typeof this.form.controls) {
+    const c = this.form.controls[ctrl];
+    return c.touched && c.invalid;
+  }
+
+  /** classify banner color */
+  statusKind(): 'healthy' | 'under' | 'over' | null {
+    const t = this.statusText();
+    if (!t) return null;
+    if (t.startsWith('Healthy')) return 'healthy';
+    if (t.startsWith('Underweight')) return 'under';
+    if (t.startsWith('Overweight')) return 'over';
+    return null;
+  }
+
+  onSubmit() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const { name, age, gender, heightFt, heightIn, weightKg, healthConcern } =
+      this.form.getRawValue();
+
+    const feet = toNumberOrNull(heightFt)!;
+    const inches = toNumberOrNull(heightIn) ?? 0;
+    const cm = this.toCentimeters(feet, inches);
+
+    if (!cm) {
+      this.form.controls.heightFt.setErrors({ invalidHeight: true });
+      return;
+    }
+
+    this.store.add({
+      name: name.trim(),
+      age: +age!,
+      gender: gender as Gender,
+      heightCm: cm,
+      weightKg: +weightKg!,
+      healthConcern: healthConcern!.trim(),
+    });
+
+    this.router.navigate(['/dashboard']);
+  }
+}
+
+export type Gender = 'male' | 'female' | 'other';
+
+export interface HealthLog {
+  name: string;
+  age: number;          // years
+  gender: Gender;       // required, one of 'male' | 'female' | 'other'
+  heightCm: number;     // centimeters
+  weightKg: number;     // kilograms
+  healthConcern: string; // required
+  createdAt: Date;
+}
+
+import { Injectable, computed, signal } from '@angular/core';
+import { HealthLog } from '../models/health-log.model';
+
+@Injectable({ providedIn: 'root' })
+export class HealthLogService {
+  goToForm() {
+    throw new Error('Method not implemented.');
+  }
+  private readonly _logs = signal<HealthLog[]>([]);
+  logs = computed(() => this._logs());
+  total = computed(() => this._logs().length);
+
+  add(log: Omit<HealthLog, 'createdAt'>) {
+    const entry: HealthLog = { ...log, createdAt: new Date() };
+    this._logs.update(list => [entry, ...list]);
+  }
+
+  clear() {
+    this._logs.set([]);
+  }
+
+  /** Healthy weight range from height using BMI 18.5–24.9. */
+  healthyRangeKg(heightCm: number): { min: number; max: number } {
+    const m = heightCm / 100;
+    const min = +(18.5 * m * m).toFixed(1);
+    const max = +(24.9 * m * m).toFixed(1);
+    return { min, max };
+  }
+
+  /** Returns a friendly text like “Overweight — lose 5.2 kg (range 58.3–78.4 kg)”. */
+  statusText(heightCm: number, weightKg: number): string | null {
+    if (!heightCm || !weightKg) return null;
+    const { min, max } = this.healthyRangeKg(heightCm);
+    if (weightKg < min) {
+      const gain = +(min - weightKg).toFixed(1);
+      return `Underweight - gain ${gain} kg (healthy range ${min}–${max} kg)`;
+    }
+    if (weightKg > max) {
+      const lose = +(weightKg - max).toFixed(1);
+      return `Overweight - lose ${lose} kg (healthy range ${max}–${min} kg)`.replace(
+        `${max}–${min}`, `${min}–${max}`
+      );
+    }
+    return `Healthy weight range (${min}–${max} kg)`;
+  }
+}
+
 
